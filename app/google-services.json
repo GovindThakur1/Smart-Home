@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "473568046502",
+    "firebase_url": "https://production-project-1c87d-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "production-project-1c87d",
+    "storage_bucket": "production-project-1c87d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:473568046502:android:755f569161ddbe09e9b367",
+        "android_client_info": {
+          "package_name": "com.govind.smarthome"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDovCn-FE0PAmhy-8wvjr3x8frP3JGp6es"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
