@@ -44,12 +44,12 @@ val Typography = Typography(
     ),
     titleMedium = TextStyle(
         fontFamily = Montserrat,
-        fontWeight = FontWeight.Medium,
+        fontWeight = FontWeight.Bold,
         fontSize = 20.sp
     ),
     titleSmall = TextStyle(
         fontFamily = Montserrat,
-        fontWeight = FontWeight.Medium,
+        fontWeight = FontWeight.Bold,
         fontSize = 18.sp
     ),
     bodyLarge = TextStyle(
