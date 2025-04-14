@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,11 +35,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,8 +53,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.govind.smarthome.api.ApiManager
 import com.govind.smarthome.ui.theme.SmartHomeTheme
 import com.govind.smarthome.ui.theme.Typography
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,6 +80,29 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun SmartHomeScreen() {
+    val apiManager = remember { ApiManager() }
+    val scope = rememberCoroutineScope()
+
+    var sensorData by remember { mutableStateOf<Map<String, String>?>(null) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            val data = apiManager.fetchSensorData()
+            Log.d("sensor data", "Fetched: $data")
+            sensorData = data
+            delay(2000)
+        }
+    }
+
+    val temperature = sensorData?.get("temperature") ?: "--"
+    val humidity = sensorData?.get("humidity") ?: "--"
+
+    val smoke = sensorData?.get("smoke")?.toFloatOrNull() ?: 0f
+    val lpg = sensorData?.get("LPG")?.toFloatOrNull() ?: 0f
+    val co = sensorData?.get("CO")?.toFloatOrNull() ?: 0f
+    val co2 = sensorData?.get("CO2")?.toFloatOrNull() ?: 0f
+    val nh3 = sensorData?.get("NH3")?.toFloatOrNull() ?: 0f
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -81,12 +111,18 @@ fun SmartHomeScreen() {
     ) {
         HeaderSection()
         Spacer(modifier = Modifier.height(16.dp))
-        ClimateInfoSection(temperature = "24", "47")
-        GasLevelsSection(10.0F, 55f, 67f, 3f, 5f)
+        ClimateInfoSection(temperature = temperature, humidity = humidity)
+        GasLevelsSection(
+            smokeReading = smoke.toFloat(),
+            LPGReading = lpg.toFloat(),
+            COReading = co.toFloat(),
+            CO2Reading = co2.toFloat(),
+            NH3Reading = nh3.toFloat()
+        )
         Spacer(modifier = Modifier.height(16.dp))
         RoomsSection()
         Spacer(modifier = Modifier.height(16.dp))
-        DevicesSection()
+        DeviceControlSection()
     }
 }
 
@@ -282,13 +318,13 @@ fun RoomItem(name: String, isSelected: Boolean = false) {
 
 
 @Composable
-fun DevicesSection(context: Context = LocalContext.current) {
+fun DeviceControlSection(context: Context = LocalContext.current) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Motion Surveillance with Switch
-        MotionSurveillanceItem()
+        // Motion Surveillance Control
+        MotionSurveillanceSwitch()
 
-        // Doors with Clickable Card
-        DoorItem {
+        // Door Management Card
+        DoorManagementCard {
             val intent = Intent(context, DoorActivity::class.java)
             context.startActivity(intent)
         }
@@ -296,52 +332,100 @@ fun DevicesSection(context: Context = LocalContext.current) {
 }
 
 @Composable
-fun MotionSurveillanceItem() {
-    var isEnabled by remember { mutableStateOf(false) }
+fun MotionSurveillanceSwitch() {
+    val apiManager = remember { ApiManager() }
+    val scope = rememberCoroutineScope()
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White, shape = RoundedCornerShape(8.dp))
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column {
-            Text("Motion Surveillance", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("Auto motion detection", fontSize = 14.sp, color = Color.Gray)
+    var isEnabled by remember { mutableStateOf(false) }
+    var hasFetchedStatus by remember { mutableStateOf(false) }
+
+    // Fetch current surveillance status on first composition
+    LaunchedEffect(Unit) {
+        if (!hasFetchedStatus) {
+            val status = apiManager.getSurveillanceStatus()
+            isEnabled = status == "active"
+            hasFetchedStatus = true
         }
-        Switch(
-            checked = isEnabled,
-            onCheckedChange = {
-                isEnabled = it
-                Log.d("MotionSurveillance", "Surveillance turned ${if (it) "ON" else "OFF"}")
+    }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        tonalElevation = 2.dp,
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Motion Surveillance",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Auto motion detection for intrusion",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-        )
+            Switch(
+                checked = isEnabled,
+                onCheckedChange = { checked ->
+                    isEnabled = checked
+                    scope.launch {
+                        val result = if (checked) {
+                            apiManager.enableSurveillance()
+                        } else {
+                            apiManager.disableSurveillance()
+                        }
+                        Log.d("api call", "API call result: $result")
+                    }
+                },
+            )
+        }
     }
 }
 
 
 @Composable
-fun DoorItem(onClick: () -> Unit) {
-    Row(
+fun DoorManagementCard(onClick: () -> Unit) {
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White, shape = RoundedCornerShape(8.dp))
-            .clickable { onClick() }
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        tonalElevation = 2.dp,
+        color = MaterialTheme.colorScheme.surface
     ) {
-        Column {
-            Text("Doors", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text("Tap to manage doors", fontSize = 14.sp, color = Color.Gray)
+        Row(
+            modifier = Modifier
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Doors",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Tap to manage doors",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = "Navigate",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
-        Icon(
-            imageVector = Icons.Default.ArrowForward,
-            contentDescription = "Navigate",
-            tint = Color.Gray
-        )
     }
 }
 
