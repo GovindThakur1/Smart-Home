@@ -24,20 +24,21 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,13 +50,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.govind.smarthome.api.ApiManager
 import com.govind.smarthome.ui.theme.SmartHomeTheme
 import com.govind.smarthome.ui.theme.Typography
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -85,12 +85,24 @@ fun SmartHomeScreen() {
 
     var sensorData by remember { mutableStateOf<Map<String, String>?>(null) }
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            val data = apiManager.fetchSensorData()
-            Log.d("sensor data", "Fetched: $data")
-            sensorData = data
-            delay(2000)
+    val job = remember { Job() }
+
+    LaunchedEffect(job) {
+        try {
+            while (true) {
+                val data = apiManager.fetchSensorData()
+                Log.d("sensor data", "Fetched: $data")
+                sensorData = data
+                delay(2000)
+            }
+        } finally {
+            job.cancel()
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            job.cancel()
         }
     }
 
@@ -103,9 +115,11 @@ fun SmartHomeScreen() {
     val co2 = sensorData?.get("CO2")?.toFloatOrNull() ?: 0f
     val nh3 = sensorData?.get("NH3")?.toFloatOrNull() ?: 0f
 
+    val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .background(Color(0xFFF5F5F5))
             .padding(16.dp)
     ) {
@@ -217,6 +231,9 @@ fun ClimateInfoSection(temperature: String, humidity: String) {
     }
 }
 
+
+// Gas Level section for displaying different gas levels
+
 @Composable
 fun GasLevelsSection(
     smokeReading: Float,
@@ -225,34 +242,93 @@ fun GasLevelsSection(
     CO2Reading: Float,
     NH3Reading: Float
 ) {
+    val averageAQI = (smokeReading + LPGReading + COReading + CO2Reading + NH3Reading) / 5
+    val context = LocalContext.current
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(16.dp)
+            .clickable {
+                val intent = Intent(context, GasChartActivity::class.java).apply {
+                    putExtra("smoke", smokeReading)
+                    putExtra("lpg", LPGReading)
+                    putExtra("co", COReading)
+                    putExtra("co2", CO2Reading)
+                    putExtra("nh3", NH3Reading)
+                }
+                context.startActivity(intent)
+            },
         shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.Start
+            modifier = Modifier.padding(16.dp)
         ) {
-            // Display each gas reading in the same card
+            // AQI
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Air Quality Index (AQI)",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = String.format("%.2f", averageAQI),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = getAQIColor(averageAQI)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // gas readings
             GasLevelItem("Smoke", smokeReading, R.drawable.smoke_icon)
             GasLevelItem("LPG", LPGReading, R.drawable.lpg_icon)
             GasLevelItem("CO", COReading, R.drawable.co_icon)
             GasLevelItem("CO2", CO2Reading, R.drawable.co2_icon)
             GasLevelItem("NH3", NH3Reading, R.drawable.nh3_icon)
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Click to see chart",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+
         }
     }
 }
+
+
+@Composable
+fun getAQIColor(aqi: Float): Color {
+    return when {
+        aqi < 50 -> Color(0xFF4CAF50)
+        aqi < 100 -> Color(0xFFFFC107)
+        aqi < 150 -> Color(0xFFFF9800)
+        aqi < 200 -> Color(0xFFF44336)
+        else -> Color(0xFF9C27B0)
+    }
+}
+
 
 @Composable
 fun GasLevelItem(gasName: String, gasLevel: Float, iconRes: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(

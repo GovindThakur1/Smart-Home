@@ -1,11 +1,15 @@
 package com.govind.smarthome.database
 
 import android.content.Context
+import android.os.Build
+import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import java.time.LocalDate
 
 object FirebaseHelper {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
@@ -20,7 +24,11 @@ object FirebaseHelper {
             if (it.isSuccessful) {
                 Toast.makeText(context, "Sign-in successful", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(context, "Sign-in failed: ${it.exception?.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "Sign-in failed: ${it.exception?.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -77,5 +85,45 @@ object FirebaseHelper {
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getSensorDataForLast14Days(
+        onResult: (Map<String, Map<String, Any>>?, String?) -> Unit
+    ) {
+        val currentDate = LocalDate.now(java.time.ZoneId.of("Asia/Kathmandu"))
+
+        // Get last 14 days as LocalDate list
+        val last14Days = (1..14).map {
+            currentDate.minusDays(it.toLong())
+        }
+
+        val allSensorData = mutableMapOf<String, Map<String, Any>>()
+        var completedRequests = 0
+
+        last14Days.forEach { date ->
+            val year = date.year.toString()
+            val month = date.monthValue.toString()
+            val day = date.dayOfMonth.toString()
+
+            val path = "Data/reading/$year/$month/$day"
+            Log.d("FirebasePath", "Fetching path: $path")
+
+            database.child(path).get()
+                .addOnSuccessListener { dataSnapshot ->
+                    if (dataSnapshot.exists()) {
+                        val sensorData = dataSnapshot.value as? Map<String, Any>
+                        sensorData?.let {
+                            allSensorData[date.toString()] = it
+                        }
+                    }
+                    completedRequests++
+                    if (completedRequests == last14Days.size) {
+                        onResult(allSensorData, null)
+                    }
+                }
+                .addOnFailureListener {
+                    onResult(null, it.message)
+                }
+        }
+    }
 
 }

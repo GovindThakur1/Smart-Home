@@ -9,7 +9,10 @@ import java.net.URL
 
 class ApiManager {
 
-    private val esp32Ip = "http://192.168.1.100"
+    private val esp32Ip = "http://192.168.1.203"
+//    private val esp32Ip = "http://192.168.152.233"
+//    private val esp32Ip = "http://172.22.20.103"
+
 
     // Fetch sensor data from the ESP32
     suspend fun fetchSensorData(): Map<String, String>? {

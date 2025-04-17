@@ -43,6 +43,7 @@ android {
 dependencies {
 
     implementation(libs.androidx.ui.text.google.fonts.v120)
+    implementation(libs.mpandroidchart)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

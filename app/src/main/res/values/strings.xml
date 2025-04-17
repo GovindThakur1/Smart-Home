@@ -2,4 +2,5 @@
     <string name="app_name">Smart Home</string>
     <string name="title_activity_splash">SplashActivity</string>
     <string name="title_activity_door">DoorActivity</string>
+    <string name="title_activity_gas_chart">GasChartActivity</string>
 </resources>
