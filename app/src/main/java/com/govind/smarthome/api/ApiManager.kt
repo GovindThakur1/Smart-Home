@@ -6,49 +6,78 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 
 class ApiManager {
 
-    private val esp32Ip = "http://192.168.1.203"
+    private val esp32Ip = "http://192.168.1.100"
 //    private val esp32Ip = "http://192.168.152.233"
 //    private val esp32Ip = "http://172.22.20.103"
 
 
-    // Fetch sensor data from the ESP32
+    // fetch all sensor data
     suspend fun fetchSensorData(): Map<String, String>? {
         val response = makeApiCall("/sensorData")
         return if (response != null) parseSensorData(response) else null
     }
 
-    // Open the door
+    // open door
     suspend fun openDoor(): String? {
         return makeApiCall("/door/open")
     }
 
-    // Close the door
+    // close door
     suspend fun closeDoor(): String? {
         return makeApiCall("/door/close")
     }
 
-    // Get the door status
+    // get door status
     suspend fun getDoorStatus(): String? {
         return makeApiCall("/door/status")
     }
 
-    // Make surveillance active
+    // activate surveillance
     suspend fun enableSurveillance(): String? {
         return makeApiCall("/surveillance/enable")
     }
 
-    // Make surveillance inactive
+    // inactivate surveillance
     suspend fun disableSurveillance(): String? {
         return makeApiCall("/surveillance/disable")
     }
 
-    // Get surveillance status if active or inactive
+    // get surveillance status
     suspend fun getSurveillanceStatus(): String? {
         return makeApiCall("/surveillance/status")
     }
+
+    // get all rfid key value
+    suspend fun getAllRfids(): String? {
+        return makeApiCall("/all-rfids")
+    }
+
+    // add thr user and rfid id
+    suspend fun addRfid(owner: String, rfid: String): String? = withContext(Dispatchers.IO) {
+        val url = URL("$esp32Ip/add-rfid")
+        val postData = "owner=${URLEncoder.encode(owner, "UTF-8")}&rfid=${URLEncoder.encode(rfid, "UTF-8")}"
+
+        val connection = (url.openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            doOutput = true
+            setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+            outputStream.write(postData.toByteArray())
+        }
+
+        connection.inputStream.bufferedReader().use { it.readText() }
+    }
+
+
+    // get the scanned rfid from esp
+    suspend fun rfidScanFlag(): String? {
+        return makeApiCall("/rfid/scan-flag")
+    }
+
+
     private suspend fun makeApiCall(endpoint: String): String? {
         return withContext(Dispatchers.IO) {
             try {
@@ -77,7 +106,7 @@ class ApiManager {
     }
 
 
-    // Helper function to parse sensor data
+    // parse sensor data if json
     private fun parseSensorData(response: String): Map<String, String>? {
         return try {
             val jsonObject = JSONObject(response)

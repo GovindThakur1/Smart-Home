@@ -59,7 +59,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+object GlobalState {
+    var isInside by mutableStateOf(true)
+}
+
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -75,6 +80,16 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onStop() {
+        super.onStop()
+        GlobalState.isInside = false
+    }
+
+    override fun onResume() {
+        super.onResume()
+        GlobalState.isInside = true
+    }
 }
 
 
@@ -85,26 +100,15 @@ fun SmartHomeScreen() {
 
     var sensorData by remember { mutableStateOf<Map<String, String>?>(null) }
 
-    val job = remember { Job() }
-
-    LaunchedEffect(job) {
-        try {
-            while (true) {
-                val data = apiManager.fetchSensorData()
-                Log.d("sensor data", "Fetched: $data")
-                sensorData = data
-                delay(2000)
-            }
-        } finally {
-            job.cancel()
+    LaunchedEffect(GlobalState.isInside) {
+        while (GlobalState.isInside) {
+            val data = apiManager.fetchSensorData()
+            Log.d("sensor data", "Fetched: $data")
+            sensorData = data
+            delay(2000)
         }
     }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            job.cancel()
-        }
-    }
 
     val temperature = sensorData?.get("temperature") ?: "--"
     val humidity = sensorData?.get("humidity") ?: "--"
@@ -486,7 +490,7 @@ fun DoorManagementCard(onClick: () -> Unit) {
         ) {
             Column {
                 Text(
-                    text = "Doors",
+                    text = "Doors and RFID",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
