@@ -60,7 +60,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit = {}) {
     ) {
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Logo
+        // app logo
         Image(
             painter = painterResource(id = R.drawable.smarthomelogo),
             contentDescription = "App Logo",
@@ -69,7 +69,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit = {}) {
         )
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Title
+        // app titile
         Text(
             text = "Login to Your Account",
             fontSize = 28.sp,
@@ -78,7 +78,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit = {}) {
         )
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Username Field
+        // Username field
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
@@ -92,7 +92,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit = {}) {
         )
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Password Field
+        // Pw field
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -107,7 +107,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit = {}) {
         )
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Login Button
+        // Login button
         Button(
             onClick = { loginClicked = true },
             modifier = Modifier.fillMaxWidth(),
@@ -119,7 +119,6 @@ fun LoginScreen(onLoginSuccess: () -> Unit = {}) {
             Text("Login", color = Color.White)
         }
 
-        // Error Message
         if (error.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
@@ -129,7 +128,6 @@ fun LoginScreen(onLoginSuccess: () -> Unit = {}) {
             )
         }
 
-        // Loading Indicator
         if (isLoading) {
             Spacer(modifier = Modifier.height(16.dp))
             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)

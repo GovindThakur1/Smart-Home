@@ -11,9 +11,6 @@ import java.net.URLEncoder
 class ApiManager {
 
     private val esp32Ip = "http://192.168.1.100"
-//    private val esp32Ip = "http://192.168.152.233"
-//    private val esp32Ip = "http://172.22.20.103"
-
 
     // fetch all sensor data
     suspend fun fetchSensorData(): Map<String, String>? {

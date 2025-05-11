@@ -196,14 +196,14 @@ fun HeaderSection(onMicClick: () -> Unit, onLogoutClick: (Context) -> Unit) {
         // Logout button
         IconButton(
             onClick = {
-                onLogoutClick(context) // Call the logout function with context when logout is clicked
+                onLogoutClick(context)
             },
             modifier = Modifier
                 .size(40.dp)
                 .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ExitToApp,  // Default logout icon
+                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                 contentDescription = "Logout"
             )
         }
@@ -279,7 +279,6 @@ fun ClimateInfoSection(temperature: String, humidity: String) {
 
 
 // Gas Level section for displaying different gas levels
-
 @Composable
 fun GasLevelsSection(
     smokeReading: Float,
@@ -480,10 +479,7 @@ fun RoomItem(name: String, isSelected: Boolean = false, imageRes: Int) {
 @Composable
 fun DeviceControlSection(context: Context = LocalContext.current) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Motion Surveillance Control
         MotionSurveillanceSwitch()
-
-        // Door Management Card
         DoorManagementCard {
             val intent = Intent(context, DoorActivity::class.java)
             context.startActivity(intent)

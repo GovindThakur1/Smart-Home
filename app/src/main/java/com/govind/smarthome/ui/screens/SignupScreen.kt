@@ -72,7 +72,7 @@ fun SignupScreen(onSignupSuccess: () -> Unit = {}) {
                 .align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // App Logo
+            // App logo
             Image(
                 painter = painterResource(id = R.drawable.smarthomelogo),
                 contentDescription = "App Logo",
@@ -90,7 +90,7 @@ fun SignupScreen(onSignupSuccess: () -> Unit = {}) {
             
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Text Fields
+            // Required text fields for this app
             OutlinedTextField(
                 value = fullName,
                 onValueChange = { fullName = it },
@@ -144,7 +144,7 @@ fun SignupScreen(onSignupSuccess: () -> Unit = {}) {
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // OTP Section
+            // OTP entry section
             if (!isOtpSent) {
                 Button(
                     onClick = {
