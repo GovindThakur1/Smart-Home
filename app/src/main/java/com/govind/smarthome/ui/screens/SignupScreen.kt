@@ -1,5 +1,6 @@
 package com.govind.smarthome.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -199,6 +200,7 @@ fun SignupScreen(onSignupSuccess: () -> Unit = {}) {
                     if (otp == generatedOtp) {
                         try {
                             val result = apiManager.addUser(fullName, username, password, email)
+                            Log.d("result", "$username $fullName $password $email")
                             if (result != null) {
                                 SessionManager.signup(context, username, fullName)
                                 onSignupSuccess()

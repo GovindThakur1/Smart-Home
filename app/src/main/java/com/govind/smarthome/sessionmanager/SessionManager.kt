@@ -12,13 +12,14 @@ object SessionManager {
     private const val KEY_FULLNAME = "fullname"
 
 
-    fun login(context: Context, username: String) {
+    fun login(context: Context, username: String, storedFullName: String?) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         val expiryTime = System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000
         prefs.edit()
             .putBoolean(KEY_IS_LOGGED_IN, true)
             .putLong(KEY_EXPIRY_TIME, expiryTime)
             .putString(KEY_USERNAME, username)
+            .putString(KEY_FULLNAME, storedFullName)
             .apply()
     }
 

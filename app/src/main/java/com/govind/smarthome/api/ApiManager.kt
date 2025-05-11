@@ -172,6 +172,10 @@ class ApiManager {
         return makeApiCall("/get-password")
     }
 
+    suspend fun getESPUserFullName():String?{
+        return makeApiCall(("/get-userfullname"))
+    }
+
     suspend fun addUser(
         fullname: String,
         username: String,

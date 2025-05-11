@@ -164,6 +164,8 @@ fun SmartHomeScreen() {
 @Composable
 fun HeaderSection(onMicClick: () -> Unit, onLogoutClick: (Context) -> Unit) {
     val context = LocalContext.current
+    val userName: String = SessionManager.getFullname(context) ?: "Unknown";
+    Log.d("espname", userName);
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -175,7 +177,7 @@ fun HeaderSection(onMicClick: () -> Unit, onLogoutClick: (Context) -> Unit) {
                 style = MaterialTheme.typography.titleSmall
             )
             Text(
-                text = SessionManager.getFullname(context) ?: "Unknown",
+                text = userName,
                 style = MaterialTheme.typography.titleLarge
             )
         }

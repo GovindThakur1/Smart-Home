@@ -36,11 +36,12 @@ fun LoginScreen(onLoginSuccess: () -> Unit = {}) {
 
             val storedUsername = apiManager.getESPUsername()
             val storedPassword = apiManager.getESPPassword()
+            val storedFullName = apiManager.getESPUserFullName()
 
             if (storedUsername == null || storedPassword == null) {
                 error = "Failed to connect to ESP"
             } else if (username == storedUsername && password == storedPassword) {
-                SessionManager.login(context, username)
+                SessionManager.login(context, username, storedFullName)
                 onLoginSuccess()
             } else {
                 error = "Invalid credentials"
