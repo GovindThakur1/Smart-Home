@@ -3,4 +3,8 @@
     <string name="title_activity_splash">SplashActivity</string>
     <string name="title_activity_door">DoorActivity</string>
     <string name="title_activity_gas_chart">GasChartActivity</string>
+    <string name="title_activity_living_room">LivingRoomActivity</string>
+    <string name="title_activity_bedroom">BedroomActivity</string>
+    <string name="title_activity_kitchen">KitchenActivity</string>
+    <string name="title_activity_auth">AuthActivity</string>
 </resources>

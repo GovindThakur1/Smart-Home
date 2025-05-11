@@ -43,7 +43,7 @@ class SplashActivity : ComponentActivity() {
             }
         }
         Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(Intent(this, AuthActivity::class.java))
             finish()
         }, 2000)
     }

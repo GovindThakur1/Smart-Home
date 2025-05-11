@@ -30,9 +30,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -48,11 +52,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.govind.smarthome.api.ApiManager
+import com.govind.smarthome.sessionmanager.SessionManager
 import com.govind.smarthome.ui.theme.SmartHomeTheme
 import com.govind.smarthome.ui.theme.Typography
 import kotlinx.coroutines.Job
@@ -97,7 +103,6 @@ class MainActivity : ComponentActivity() {
 fun SmartHomeScreen() {
     val apiManager = remember { ApiManager() }
     val scope = rememberCoroutineScope()
-
     var sensorData by remember { mutableStateOf<Map<String, String>?>(null) }
 
     LaunchedEffect(GlobalState.isInside) {
@@ -127,7 +132,19 @@ fun SmartHomeScreen() {
             .background(Color(0xFFF5F5F5))
             .padding(16.dp)
     ) {
-        HeaderSection()
+        HeaderSection(
+            onMicClick = {
+                scope.launch {
+                    val response = apiManager.startRecord()
+                    println("Voice record started: $response")
+                }
+            },
+            onLogoutClick = { context ->
+                SessionManager.logout(context)
+            }
+        )
+
+
         Spacer(modifier = Modifier.height(16.dp))
         ClimateInfoSection(temperature = temperature, humidity = humidity)
         GasLevelsSection(
@@ -145,7 +162,8 @@ fun SmartHomeScreen() {
 }
 
 @Composable
-fun HeaderSection() {
+fun HeaderSection(onMicClick: () -> Unit, onLogoutClick: (Context) -> Unit) {
+    val context = LocalContext.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -157,17 +175,41 @@ fun HeaderSection() {
                 style = MaterialTheme.typography.titleSmall
             )
             Text(
-                text = "Govind Thakur",
+                text = SessionManager.getFullname(context) ?: "Unknown",
                 style = MaterialTheme.typography.titleLarge
             )
         }
-        Box(
+
+        // mic icon button
+        IconButton(
+            onClick = onMicClick,
             modifier = Modifier
                 .size(40.dp)
-                .background(Color.Red, shape = CircleShape)
-        ) {}
+                .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.mic_icon),
+                contentDescription = "Voice Command",
+            )
+        }
+
+        // Logout button
+        IconButton(
+            onClick = {
+                onLogoutClick(context) // Call the logout function with context when logout is clicked
+            },
+            modifier = Modifier
+                .size(40.dp)
+                .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ExitToApp,  // Default logout icon
+                contentDescription = "Logout"
+            )
+        }
     }
 }
+
 
 @Composable
 fun ClimateInfoSection(temperature: String, humidity: String) {
@@ -277,7 +319,7 @@ fun GasLevelsSection(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Air Quality Index (AQI)",
+                    text = "Average Air Quality",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -366,32 +408,70 @@ fun RoomsSection() {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        RoomItem("Living Room")
-        RoomItem("Bathroom", isSelected = true)
-        RoomItem("Bedroom")
+        RoomItem("Living Room", imageRes = R.drawable.living_room_bg)
+        RoomItem("Bedroom", isSelected = true, imageRes = R.drawable.bedroom_bg)
+        RoomItem("Kitchen", imageRes = R.drawable.kitchen_bg)
     }
 }
 
 @Composable
-fun RoomItem(name: String, isSelected: Boolean = false) {
+fun RoomItem(name: String, isSelected: Boolean = false, imageRes: Int) {
+    val context = LocalContext.current  // Get context here
+    val scope = rememberCoroutineScope()
+
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+            else MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
         ),
         modifier = Modifier
             .size(100.dp)
             .padding(4.dp)
+            .clickable {
+                // Handle navigation based on the name of the room
+                scope.launch {
+                    when (name) {
+                        "Living Room" -> {
+                            val intent = Intent(context, LivingRoomActivity::class.java)
+                            context.startActivity(intent)
+                        }
+
+                        "Bedroom" -> {
+                            val intent = Intent(context, BedroomActivity::class.java)
+                            context.startActivity(intent)
+                        }
+
+                        "Kitchen" -> {
+                            val intent = Intent(context, KitchenActivity::class.java)
+                            context.startActivity(intent)
+                        }
+                    }
+                }
+            }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            Text(
-                name,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 8.dp)
+            Image(
+                painter = painterResource(id = imageRes),
+                contentDescription = "$name background",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
             )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Black.copy(alpha = 0.4f))
+                    .align(Alignment.TopCenter)
+                    .padding(vertical = 8.dp)
+            ) {
+                // Overlay text
+                Text(
+                    name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.White,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
         }
     }
 }

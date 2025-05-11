@@ -18,6 +18,26 @@
         android:theme="@style/Theme.SmartHome"
         tools:targetApi="31">
         <activity
+            android:name=".AuthActivity"
+            android:exported="false"
+            android:label="@string/title_activity_auth"
+            android:theme="@style/Theme.SmartHome" />
+        <activity
+            android:name=".KitchenActivity"
+            android:exported="false"
+            android:label="@string/title_activity_kitchen"
+            android:theme="@style/Theme.SmartHome" />
+        <activity
+            android:name=".BedroomActivity"
+            android:exported="false"
+            android:label="@string/title_activity_bedroom"
+            android:theme="@style/Theme.SmartHome" />
+        <activity
+            android:name=".LivingRoomActivity"
+            android:exported="false"
+            android:label="@string/title_activity_living_room"
+            android:theme="@style/Theme.SmartHome" />
+        <activity
             android:name=".GasChartActivity"
             android:exported="false"
             android:label="@string/title_activity_gas_chart"
